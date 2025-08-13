@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: msk-postgres
+    environment:
+      POSTGRES_DB: msk_consumer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  msk-producer:
+    build:
+      context: ./msk-cross-account-producer
+      dockerfile: Dockerfile
+    container_name: msk-producer
+    ports:
+      - "8080:8080"
+    environment:
+      MSK_BOOTSTRAP_SERVERS: ${MSK_BOOTSTRAP_SERVERS}
+      MSK_CLUSTER_ARN: ${MSK_CLUSTER_ARN}
+      CROSS_ACCOUNT_ROLE_ARN: ${CROSS_ACCOUNT_ROLE_ARN}
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-connectivity-test}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  msk-consumer:
+    build:
+      context: ./msk-cross-account-consumer
+      dockerfile: Dockerfile
+    container_name: msk-consumer
+    ports:
+      - "8081:8081"
+    environment:
+      MSK_BOOTSTRAP_SERVERS: ${MSK_BOOTSTRAP_SERVERS}
+      MSK_CLUSTER_ARN: ${MSK_CLUSTER_ARN}
+      CROSS_ACCOUNT_ROLE_ARN: ${CROSS_ACCOUNT_ROLE_ARN}
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-connectivity-test}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/msk_consumer
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: password
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      msk-producer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: msk-network

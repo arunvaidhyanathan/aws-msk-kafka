@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: msk-cross-account-consumer
+  kafka:
+    bootstrap-servers: ${MSK_BOOTSTRAP_SERVERS}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: ${CONSUMER_GROUP_ID:msk-cross-account-consumer-group}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.example.msk.consumer.model"
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: AWS_MSK_IAM
+      sasl.jaas.config: software.amazon.msk.auth.iam.IAMLoginModule required;
+      sasl.client.callback.handler.class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
+      session.timeout.ms: 30000
+      request.timeout.ms: 30000
+    listener:
+      ack-mode: manual
+      concurrency: ${KAFKA_CONSUMER_CONCURRENCY:3}
+      
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/msk_consumer}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        types:
+          print:
+            banner: false
+    show-sql: false
+    
+aws:
+  region: ${AWS_REGION:us-east-1}
+  msk:
+    cluster-arn: ${MSK_CLUSTER_ARN}
+    role-arn: ${CROSS_ACCOUNT_ROLE_ARN}
+    topic-name: ${KAFKA_TOPIC:connectivity-test}
+    role-session-name: ${ROLE_SESSION_NAME:msk-consumer-session}
+    role-duration-seconds: ${ROLE_DURATION_SECONDS:3600}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      cloudwatch:
+        enabled: ${CLOUDWATCH_ENABLED:false}
+        namespace: MSKCrossAccountConsumer
+        step: 1m
+
+logging:
+  level:
+    root: INFO
+    com.example.msk: DEBUG
+    org.apache.kafka: INFO
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+consumer:
+  retry:
+    max-attempts: ${RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${RETRY_BACKOFF_MS:1000}
+  dead-letter:
+    enabled: ${DLQ_ENABLED:true}
+    topic: ${DLQ_TOPIC:connectivity-test-dlq}

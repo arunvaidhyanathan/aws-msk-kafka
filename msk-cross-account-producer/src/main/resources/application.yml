@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: msk-cross-account-producer
+  kafka:
+    bootstrap-servers: ${MSK_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+      linger-ms: 10
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: AWS_MSK_IAM
+      sasl.jaas.config: software.amazon.msk.auth.iam.IAMLoginModule required;
+      sasl.client.callback.handler.class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
+      session.timeout.ms: 30000
+      request.timeout.ms: 30000
+
+aws:
+  region: ${AWS_REGION:us-east-1}
+  msk:
+    cluster-arn: ${MSK_CLUSTER_ARN}
+    role-arn: ${CROSS_ACCOUNT_ROLE_ARN}
+    topic-name: ${KAFKA_TOPIC:connectivity-test}
+    role-session-name: ${ROLE_SESSION_NAME:msk-producer-session}
+    role-duration-seconds: ${ROLE_DURATION_SECONDS:3600}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      cloudwatch:
+        enabled: ${CLOUDWATCH_ENABLED:false}
+        namespace: MSKCrossAccountProducer
+        step: 1m
+
+logging:
+  level:
+    root: INFO
+    com.example.msk: DEBUG
+    org.apache.kafka: INFO
+    org.springframework.kafka: INFO
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+producer:
+  default-batch-size: ${DEFAULT_BATCH_SIZE:10}
+  max-batch-size: ${MAX_BATCH_SIZE:1000}
+  rate-limit-per-second: ${RATE_LIMIT_PER_SECOND:100}

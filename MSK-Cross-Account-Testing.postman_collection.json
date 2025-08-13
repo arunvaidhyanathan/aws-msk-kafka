@@ -1,0 +1,424 @@
+{
+  "info": {
+    "name": "MSK Cross-Account Testing",
+    "description": "Postman collection for testing AWS MSK cross-account message production and consumption",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Producer APIs",
+      "item": [
+        {
+          "name": "Produce Single Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": \"Test message from Postman\",\n  \"messageType\": \"connectivity-test\",\n  \"batchSize\": 1,\n  \"sourceAccount\": \"123456789012\",\n  \"targetAccount\": \"987654321098\"\n}"
+            },
+            "url": {
+              "raw": "{{producer_base_url}}/api/v1/produce",
+              "host": ["{{producer_base_url}}"],
+              "path": ["api", "v1", "produce"]
+            }
+          }
+        },
+        {
+          "name": "Produce Batch Messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": \"Batch test message\",\n  \"messageType\": \"batch-test\",\n  \"batchSize\": 10,\n  \"sourceAccount\": \"123456789012\",\n  \"targetAccount\": \"987654321098\"\n}"
+            },
+            "url": {
+              "raw": "{{producer_base_url}}/api/v1/produce",
+              "host": ["{{producer_base_url}}"],
+              "path": ["api", "v1", "produce"]
+            }
+          }
+        },
+        {
+          "name": "Batch Test Endpoint",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{producer_base_url}}/api/v1/test/batch?messageCount=100&payloadPrefix=load-test",
+              "host": ["{{producer_base_url}}"],
+              "path": ["api", "v1", "test", "batch"],
+              "query": [
+                {
+                  "key": "messageCount",
+                  "value": "100"
+                },
+                {
+                  "key": "payloadPrefix",
+                  "value": "load-test"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Producer Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{producer_base_url}}/api/v1/metrics",
+              "host": ["{{producer_base_url}}"],
+              "path": ["api", "v1", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Producer Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{producer_base_url}}/api/v1/health",
+              "host": ["{{producer_base_url}}"],
+              "path": ["api", "v1", "health"]
+            }
+          }
+        },
+        {
+          "name": "Producer Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{producer_base_url}}/swagger-ui.html",
+              "host": ["{{producer_base_url}}"],
+              "path": ["swagger-ui.html"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consumer APIs",
+      "item": [
+        {
+          "name": "Get Consumer Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/status",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get Detailed Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/metrics",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Query Messages - All",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/messages?page=0&size=20&sortBy=consumedTimestamp&sortDirection=DESC",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "messages"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "consumedTimestamp"
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "DESC"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Query Messages - By Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/messages?processingStatus=SUCCESS&page=0&size=10",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "messages"],
+              "query": [
+                {
+                  "key": "processingStatus",
+                  "value": "SUCCESS"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Recent Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/messages/recent",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "messages", "recent"]
+            }
+          }
+        },
+        {
+          "name": "Get Message by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/messages/:messageId",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "messages", ":messageId"],
+              "variable": [
+                {
+                  "key": "messageId",
+                  "value": "{{message_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset Consumer Offsets (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Token",
+                "value": "admin-secret-token"
+              }
+            ],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/reset",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "reset"]
+            }
+          }
+        },
+        {
+          "name": "Consumer Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/api/v1/consumer/health",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["api", "v1", "consumer", "health"]
+            }
+          }
+        },
+        {
+          "name": "Consumer Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumer_base_url}}/swagger-ui.html",
+              "host": ["{{consumer_base_url}}"],
+              "path": ["swagger-ui.html"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "End-to-End Test",
+          "item": [
+            {
+              "name": "1. Produce Test Message",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payload\": \"E2E test message {{$timestamp}}\",\n  \"messageType\": \"e2e-test\",\n  \"batchSize\": 1,\n  \"sourceAccount\": \"account-b\",\n  \"targetAccount\": \"account-a\"\n}"
+                },
+                "url": {
+                  "raw": "{{producer_base_url}}/api/v1/produce",
+                  "host": ["{{producer_base_url}}"],
+                  "path": ["api", "v1", "produce"]
+                }
+              }
+            },
+            {
+              "name": "2. Wait 5 seconds",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "setTimeout(() => {}, 5000);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{consumer_base_url}}/api/v1/consumer/health",
+                  "host": ["{{consumer_base_url}}"],
+                  "path": ["api", "v1", "consumer", "health"]
+                }
+              }
+            },
+            {
+              "name": "3. Check Consumer Received Message",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{consumer_base_url}}/api/v1/consumer/messages/recent",
+                  "host": ["{{consumer_base_url}}"],
+                  "path": ["api", "v1", "consumer", "messages", "recent"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Load Test",
+          "item": [
+            {
+              "name": "1. Produce 1000 Messages",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{producer_base_url}}/api/v1/test/batch?messageCount=1000&payloadPrefix=load-test",
+                  "host": ["{{producer_base_url}}"],
+                  "path": ["api", "v1", "test", "batch"],
+                  "query": [
+                    {
+                      "key": "messageCount",
+                      "value": "1000"
+                    },
+                    {
+                      "key": "payloadPrefix",
+                      "value": "load-test"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "2. Check Producer Metrics",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{producer_base_url}}/api/v1/metrics",
+                  "host": ["{{producer_base_url}}"],
+                  "path": ["api", "v1", "metrics"]
+                }
+              }
+            },
+            {
+              "name": "3. Check Consumer Metrics",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{consumer_base_url}}/api/v1/consumer/metrics",
+                  "host": ["{{consumer_base_url}}"],
+                  "path": ["api", "v1", "consumer", "metrics"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "producer_base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "consumer_base_url",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "message_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msk-producer
+  namespace: msk-testing
+  labels:
+    app: msk-producer
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: msk-producer
+  template:
+    metadata:
+      labels:
+        app: msk-producer
+        version: v1
+    spec:
+      serviceAccountName: msk-test-service-account
+      containers:
+      - name: msk-producer
+        image: your-registry/msk-producer:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: MSK_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: msk-config
+              key: bootstrap-servers
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: msk-config
+              key: aws-region
+        - name: MSK_CLUSTER_ARN
+          valueFrom:
+            configMapKeyRef:
+              name: msk-config
+              key: cluster-arn
+        - name: CROSS_ACCOUNT_ROLE_ARN
+          valueFrom:
+            configMapKeyRef:
+              name: msk-config
+              key: cross-account-role-arn
+        - name: KAFKA_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: msk-config
+              key: topic-name
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+        startupProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: msk-producer-service
+  namespace: msk-testing
+  labels:
+    app: msk-producer
+spec:
+  selector:
+    app: msk-producer
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: msk-config
+  namespace: msk-testing
+data:
+  bootstrap-servers: "b-1.msk-cluster.kafka.us-east-1.amazonaws.com:9098,b-2.msk-cluster.kafka.us-east-1.amazonaws.com:9098"
+  aws-region: "us-east-1"
+  cluster-arn: "arn:aws:kafka:us-east-1:123456789012:cluster/test-cluster/uuid"
+  cross-account-role-arn: "arn:aws:iam::987654321098:role/MSKCrossAccountRole"
+  topic-name: "connectivity-test"
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: msk-test-service-account
+  namespace: msk-testing
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT-B:role/EKSMSKTestRole
